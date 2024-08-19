@@ -1,10 +1,10 @@
-Creating an EKS cluster in a production environment with a new VPC and setting up a Terraform workspace involves several steps. Below is a detailed guide on how to set this up, including the `variables.tf`, `output.tf`, `main.tf`, `module.tf`, and `backend.tf` files, as well as enabling CloudWatch logging.
+Creating an EKS cluster in a production environment with a new VPC and setting up a Terraform workspace involves several steps. 
+Below is a detailed guide on how to set this up, including the `variables.tf`, `output.tf`, `main.tf`, `module.tf`, and `backend.tf` files, as well as enabling CloudWatch logging.
 
 ### 1. **Directory Structure**
 
 Here's a suggested directory structure for your Terraform project:
 
-```plaintext
 terraform-eks/
 ├── environments/
 │   └── prod/
@@ -23,21 +23,17 @@ terraform-eks/
 │       ├── variables.tf
 │       └── outputs.tf
 └── terraform.tf
-```
 
 ### 2. **Create Terraform Workspace**
 
 First, create a new workspace for the production environment:
 
-```bash
 terraform workspace new prod
-```
 
 ### 3. **VPC Module (`modules/vpc`)**
 
-In `modules/vpc/main.tf`:
+# In `modules/vpc/main.tf`:
 
-```hcl
 provider "aws" {
   region = var.aws_region
 }
@@ -71,11 +67,10 @@ output "vpc_id" {
 output "public_subnet_ids" {
   value = aws_subnet.public[*].id
 }
-```
 
-In `modules/vpc/variables.tf`:
 
-```hcl
+# In `modules/vpc/variables.tf`:
+
 variable "aws_region" {
   type = string
 }
@@ -89,9 +84,8 @@ variable "tags" {
 }
 ```
 
-In `modules/vpc/outputs.tf`:
+# In `modules/vpc/outputs.tf`:
 
-```hcl
 output "vpc_id" {
   value = aws_vpc.this.id
 }
@@ -99,13 +93,11 @@ output "vpc_id" {
 output "public_subnet_ids" {
   value = aws_subnet.public[*].id
 }
-```
 
 ### 4. **EKS Module (`modules/eks`)**
 
-In `modules/eks/main.tf`:
+# In `modules/eks/main.tf`:
 
-```hcl
 provider "aws" {
   region = var.aws_region
 }
@@ -144,11 +136,9 @@ output "eks_cluster_endpoint" {
 output "eks_cluster_security_group_id" {
   value = module.eks.cluster_security_group_id
 }
-```
 
-In `modules/eks/variables.tf`:
+# In `modules/eks/variables.tf`:
 
-```hcl
 variable "aws_region" {
   type = string
 }
@@ -182,9 +172,8 @@ variable "tags" {
 }
 ```
 
-In `modules/eks/outputs.tf`:
+# In `modules/eks/outputs.tf`:
 
-```hcl
 output "eks_cluster_id" {
   value = module.eks.cluster_id
 }
@@ -196,7 +185,7 @@ output "eks_cluster_endpoint" {
 output "eks_cluster_security_group_id" {
   value = module.eks.cluster_security_group_id
 }
-```
+
 
 ### 5. **Production Environment Configuration (`environments/prod`)**
 
