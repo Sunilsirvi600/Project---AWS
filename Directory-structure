@@ -1,0 +1,90 @@
+terraform-project/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+├── terraform.tfvars
+├── backend.tf
+├── providers.tf
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── terraform.tfvars
+│   ├── staging/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── terraform.tfvars
+│   └── prod/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── terraform.tfvars
+├── modules/
+│   ├── network/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── README.md
+│   ├── compute/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── README.md
+│   └── storage/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── README.md
+└── data/
+    ├── data.json
+    ├── data.yaml
+=============================================================
+terraform-project/
+├── modules/
+│   ├── network/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── README.md
+│   ├── compute/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── README.md
+│   └── storage/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── README.md
+==============================================================
+terraform-project/
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── terraform.tfvars
+│   ├── staging/
+│   │   ├── main.tf
+│   │   ├── variables.tf
+│   │   ├── outputs.tf
+│   │   └── terraform.tfvars
+│   └── prod/
+│       ├── main.tf
+│       ├── variables.tf
+│       ├── outputs.tf
+│       └── terraform.tfvars
+===============================================================
+terraform-project/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+├── terraform.tfvars
+├── backend.tf
+├── providers.tf
+├── environments/
+├── modules/
+├── data/
+└── .gitignore
