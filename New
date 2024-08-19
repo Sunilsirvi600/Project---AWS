@@ -1,0 +1,20 @@
+# Install AWS cli in ubuntu
+sudo apt update 
+sudo apt-get upgrade -y
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# Install unzip
+
+sudo apt install unzip -y
+unzip awscliv2.zip
+sudo ./aws/install
+
+# AWS cli version check for confirmation
+aws --version
+
+
+
+
+
+
