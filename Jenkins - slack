@@ -1,0 +1,43 @@
+Integration of Slack with jenkins Pipeline 😎 
+Step 1: Install the Slack Plugin in Jenkins
+Log in to Jenkins:
+Open Jenkins in your web browser.
+Go to the main Jenkins page and click on Manage Jenkins (usually on the left side).
+Install the Slack Plugin:
+Click on Manage Plugins.
+Go to the Available tab and search for Slack Notification Plugin.
+Select it, then click Install without restart.
+
+Step 2: Set Up a Slack App to Get a Special URL
+Create a Slack App:
+Go to the Slack API page.
+Click Create New App and choose From scratch.
+Name your app something like Jenkins Notifications and choose the Slack workspace you want to connect.
+Enable Incoming Webhooks:
+In your app's settings, find Incoming Webhooks and turn it on.
+Click Add New Webhook to Workspace, then pick the Slack channel where you want Jenkins notifications to show up.
+Copy the Webhook URL that appears (this is a special link you’ll need for Jenkins).
+
+Step 3: Add the Slack Webhook URL to Jenkins
+Configure Jenkins with Slack:
+Go back to Jenkins and click Manage Jenkins, then Configure System.
+Scroll down to the Slack section.
+Paste the Webhook URL you copied from Slack earlier into the appropriate field.
+You can also add other details, like which Slack channel to send notifications to.
+
+Step 4: Set Up a Job in Jenkins to Send Notifications
+Pick a Job in Jenkins:
+Go to one of your jobs in Jenkins (a job is a project or task Jenkins runs).
+Click Configure for that job.
+Add Slack Notifications:
+Scroll down until you see Post-build Actions.
+Click Add post-build action and select Slack Notifications.
+Choose when you want to get notifications, like when a build succeeds or fails.
+Save Your Settings:
+Click Save at the bottom of the page to keep your changes.
+
+Step 5: Test It Out
+Run Your Job:
+Manually start the job, or wait for it to run automatically.
+Check Slack:
+Look at your Slack channel to see if you got a notification when the job finished.
