@@ -1,0 +1,20 @@
+sudo apt update
+sudo apt-get upgrade -y
+
+# Install aws cli in ubuntu
+
+sudo apt install unzip -y
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+# install python 3
+sudo apt install python3 -y
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+
+echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+
+
+
