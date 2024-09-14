@@ -1,0 +1,146 @@
+### Step-by-Step Guide to Connect Jenkins with GitHub
+
+#### 1. **Install Jenkins Git Plugin**
+Jenkins needs the **Git** plugin to interact with GitHub repositories.
+
+- Go to **Jenkins Dashboard** → **Manage Jenkins** → **Manage Plugins**.
+- Under the **Available** tab, search for `Git Plugin` and install it (if not already installed).
+  
+  If it's installed, it will be listed under the **Installed** tab.
+
+#### 2. **Configure GitHub Webhook (Optional but Recommended)**
+This step allows Jenkins to be triggered automatically when you push code to GitHub.
+
+- **In GitHub**:
+  1. Go to your repository on GitHub.
+  2. Navigate to **Settings** → **Webhooks** → **Add webhook**.
+  3. Under **Payload URL**, enter the Jenkins URL followed by `/github-webhook/`. Example:
+     
+     http://<your-jenkins-url>/github-webhook/
+     
+  4. Set **Content type** to `application/json`.
+  5. In **Which events would you like to trigger this webhook?**, choose "Just the push event".
+  6. Click **Add webhook**.
+
+#### 3. **Generate GitHub Personal Access Token (for authentication)**
+You need a **Personal Access Token** (PAT) to allow Jenkins to authenticate with GitHub.
+
+1. Go to **GitHub** → **Settings** → **Developer Settings** → **Personal Access Tokens**.
+2. Click **Generate new token**.
+3. Select the necessary scopes:
+   - `repo` (full control of private repositories).
+   - `admin:repo_hook` (optional but required if you want Jenkins to manage webhooks).
+4. Generate the token and copy it. Keep this token safe as it won’t be shown again.
+
+#### 4. **Configure Jenkins Credentials for GitHub**
+You’ll need to configure Jenkins to store the GitHub PAT as credentials.
+
+- Go to **Jenkins Dashboard** → **Manage Jenkins** → **Manage Credentials**.
+- Under the **Global** domain, click **Add Credentials**.
+- Choose the **Kind** as `Secret text`.
+- In **Secret**, paste the GitHub Personal Access Token (PAT).
+- Give it an **ID** like `github-token` and click **OK**.
+
+#### 5. **Create a New Jenkins Job for the GitHub Repo**
+
+- Go to the Jenkins **Dashboard** and click on **New Item**.
+- Enter a name for the job and select **Freestyle project** or **Pipeline** depending on your use case.
+- Click **OK**.
+
+#### 6. **Configure GitHub Repository in Jenkins Job**
+
+- Inside the job configuration page:
+  1. Under **Source Code Management**, choose **Git**.
+  2. In the **Repository URL**, paste the URL of your GitHub repository. It should be in this format:
+     
+     https://github.com/<username>/<repo-name>.git
+     
+  3. Under **Credentials**, select the credentials you created earlier (the GitHub PAT).
+
+#### 7. **Configure Webhook Trigger (Optional)**
+
+If you have set up a GitHub webhook in Step 2, enable the webhook trigger:
+
+- In the Jenkins job configuration, scroll down to **Build Triggers**.
+- Select **GitHub hook trigger for GITScm polling**. This ensures that the build is triggered automatically when changes are pushed to GitHub.
+
+#### 8. **Build Steps for the Job**
+Set the build steps for the Jenkins job. For example, if you want to build the code:
+
+- Under the **Build** section, click **Add build step**.
+- Choose the relevant option (e.g., **Execute shell**, **Invoke Gradle script**, etc.).
+
+Example shell script to run:
+
+#!/bin/bash
+echo "Building the project"
+# Your build commands here, like Maven, Gradle, or NPM builds
+
+#### 9. **Test the Job**
+
+Once everything is configured:
+
+- Click **Save** on the job configuration page.
+- Manually trigger the job by clicking **Build Now**, or push changes to your GitHub repository (if using webhooks) to see if it automatically triggers the build.
+
+#### 10. **Monitor the Build**
+
+- Check the build console output to ensure that Jenkins is pulling the code from GitHub and building it correctly.
+  
+  You can access the console logs from the **Build History** section in the job view.
+
+---
+
+### Additional Configuration: Using Jenkins Pipeline with GitHub
+
+If you're using a **Pipeline job** instead of a **Freestyle project**, you can create a `Jenkinsfile` in your GitHub repository to define your CI/CD pipeline.
+
+1. Add a `Jenkinsfile` to your repository (example below).
+========================================================================================================
+   ```groovy
+   pipeline {
+       agent any
+
+       stages {
+           stage('Checkout') {
+               steps {
+                   git url: 'https://github.com/<username>/<repo-name>.git', credentialsId: 'github-token'
+               }
+           }
+
+           stage('Build') {
+               steps {
+                   sh './build-script.sh'  // Replace with your actual build commands
+               }
+           }
+
+           stage('Test') {
+               steps {
+                   sh './run-tests.sh'  // Replace with your actual test commands
+               }
+           }
+
+           stage('Deploy') {
+               steps {
+                   sh './deploy.sh'  // Replace with your actual deployment script
+               }
+           }
+       }
+   }
+=======================================================================================================
+
+2. Create a **Pipeline Job** in Jenkins:
+   - In the job configuration, select **Pipeline**.
+   - Set the **Pipeline script from SCM** option and specify the GitHub repository.
+   - Make sure the **Credentials** are set properly.
+
+3. Save and build the job.
+
+---
+
+### Summary of Key Steps:
+1. Install and configure the Git Plugin in Jenkins.
+2. Generate a GitHub Personal Access Token and add it as credentials in Jenkins.
+3. Set up a webhook in GitHub to trigger Jenkins builds automatically.
+4. Configure the Jenkins job to pull code from GitHub.
+5. Test the integration by triggering a build.
