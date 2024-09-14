@@ -1,0 +1,77 @@
+# Install java
+
+sudo apt update
+sudo apt install openjdk-17-jre
+
+# verify java version
+
+java -version
+
+# install jenkins
+
+curl -fsSL https://pkg.jenkins.io/debian/jenkins.io-2023.key | sudo tee \
+  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+  https://pkg.jenkins.io/debian binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install jenkins
+
+# now go to webui 
+
+public-ip:8080 
+
+# go to cli copy Administrator password
+
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+# go to webui and paste Administrator password
+
+# install suggested plugins
+
+# create username with passwd
+
+# now start jenkins
+
+# now go to jenkins - manage jenkins - plugins - install docker pipeline plugins - install and restart
+
+# install docker 
+
+sudo apt update
+sudo apt install docker.io
+
+# setup permission
+
+sudo su - 
+usermod -aG docker jenkins
+usermod -aG docker ubuntu
+systemctl restart docker
+
+# once u setup all things to better restart
+
+http://<ec2-instance-public-ip>:8080/restart
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
