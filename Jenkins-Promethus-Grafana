@@ -53,9 +53,14 @@ First, download and install Prometheus on your server.
 
    ```bash
    sudo apt-get install -y software-properties-common
-   sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
-   wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+                              sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+                              wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
    ```
+# Download the GPG Key and save it in the trusted.gpg.d directory:
+ wget -q -O - https://packages.grafana.com/gpg.key | sudo tee /etc/apt/trusted.gpg.d/grafana.gpg > /dev/null
+
+# Add the Grafana repository:
+ echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee /etc/apt/sources.list.d/grafana.list
 
 2. Install Grafana:
 
