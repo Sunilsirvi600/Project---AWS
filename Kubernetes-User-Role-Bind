@@ -1,0 +1,58 @@
+# How to create new user and create new role and binding 
+**1. Create Service Accounts:**
+
+Create a service account for each user:
+
+kubectl create serviceaccount user1
+kubectl create serviceaccount user2
+kubectl create serviceaccount user3
+
+**2. Create Roles:**
+
+Create roles with the desired permissions for each user:
+
+# User 1: Read-only access to the "dev" namespace
+kubectl create role user1-role -n dev --verb=get,list,watch --namespace=dev --resource=pods,services,deployments
+
+# User 2: Read and write access to the "dev" and "staging" namespaces
+kubectl create role user2-role --verb=get,list,watch,create,update,patch,delete,deletecollection --namespace=dev,staging --resource=*
+
+# User 3: Admin access to the entire cluster
+kubectl create clusterrole admin-role --verb=* --namespace=* --resource=*
+
+**3. Bind Roles to Service Accounts:**
+
+Bind the roles to the corresponding service accounts:
+
+kubectl create rolebinding user1-role-binding --role=user1-role --serviceaccount=user1 --namespace=dev
+
+kubectl create rolebinding user2-role-binding --role=user2-role --serviceaccount=user2
+
+kubectl create clusterrolebinding admin-role-binding --role=admin-role --serviceaccount=user3
+
+**4. Generate Tokens:**
+
+For each service account, generate a token:
+
+kubectl get secret -o jsonpath='{.secrets[0].name}' user1
+kubectl describe secret $(kubectl get secret -o jsonpath='{.secrets[0].name}' user1)
+
+Copy the token for each user.
+
+**5. Use the Tokens:**
+
+* **kubectl Configuration:**
+Create a new kubeconfig file for each user:
+      
+kubectl config set-context user1 --cluster=YOUR_CLUSTER_NAME --user=user1 --namespace=dev
+kubectl config set-credentials user1 --token=<USER1_TOKEN>
+
+* **kubectl Login:**
+Log in using the token:
+
+kubectl login --token=<USER1_TOKEN> --cluster=YOUR_CLUSTER_NAME --namespace=dev
+
+**6. Verify Access:**
+
+* Use `kubectl` to test the user's permissions. For example, `kubectl get pods -n dev` for user1.
+
