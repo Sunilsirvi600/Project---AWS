@@ -34,9 +34,10 @@ rules:
 
 Save the modified YAML definition.
 
-**6. Verify the Changes:**
+**6. Verify the Changes:**   view the updated role or cluster role definition.
 
-Use `kubectl get role <role-name>` or `kubectl get clusterrole <clusterrole-name>` to view the updated role or cluster role definition.
+kubectl get role <role-name>
+kubectl get clusterrole <clusterrole-name> 
 
 **Additional Tips:**
 
