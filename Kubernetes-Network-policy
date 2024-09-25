@@ -7,6 +7,9 @@ egress rule 2 types
 1- port -
 2- protocol
 
+frontend - access - backend - access - database
+frontend - deny access - database
+
 Feature	 |   Ingress Network Policy	              |   Egress Network Policy
 Controls |      Incoming traffic	                |   Outgoing traffic
 Focus	   |  Protecting pods from external access	|Preventing pods from accessing unauthorized resources
