@@ -72,7 +72,8 @@ aws configure
 
 #### Step 1: Create an EKS Cluster Using `eksctl`
 
-The simplest way to create an EKS cluster is by using **eksctl**. This tool handles the provisioning of the control plane, worker nodes, and other configurations.
+The simplest way to create an EKS cluster is by using **eksctl**. This tool handles the provisioning of the control plane, 
+worker nodes, and other configurations.
 
 Run the following command to create an EKS cluster with default settings:
 
@@ -127,35 +128,34 @@ Once the cluster is created, you can configure `kubectl` to access it.
 aws eks --region <your-region> update-kubeconfig --name <your-cluster-name>
 ```
 
-This command updates your **kubeconfig** file with the details of the newly created EKS cluster. Now, you can use `kubectl` to interact with your cluster.
+This command updates your **kubeconfig** file with the details of the newly created EKS cluster. 
+Now, you can use `kubectl` to interact with your cluster.
 
 **Verify `kubectl` configuration:**
-```bash
+
 kubectl get svc
-```
 
 You should see the default Kubernetes services like `kubernetes` in the output.
 
 #### Step 3: Deploy a Sample Application (Optional)
 
-To test your cluster, you can deploy a sample application using a simple deployment and service. This helps ensure that the cluster is working as expected.
+To test your cluster, you can deploy a sample application using a simple deployment and service. 
+This helps ensure that the cluster is working as expected.
 
 Create a deployment:
-```bash
+
 kubectl create deployment nginx --image=nginx
-```
 
 Expose the deployment as a service:
-```bash
+
 kubectl expose deployment nginx --port=80 --type=LoadBalancer
-```
 
 Check the service:
-```bash
-kubectl get svc
-```
 
-Once the external IP is assigned to the `nginx` service, you can access the NGINX default page by navigating to the IP address in your browser.
+kubectl get svc
+
+Once the external IP is assigned to the `nginx` service, you can access the NGINX default page by 
+navigating to the IP address in your browser.
 
 #### Step 4: Scaling Your EKS Cluster (Optional)
 
@@ -169,11 +169,8 @@ This command scales the number of nodes in your node group to 4.
 #### Step 5: Cleaning Up
 
 To delete the EKS cluster when you no longer need it:
-```bash
-eksctl delete cluster --name <your-cluster-name> --region <your-region>
-```
 
----
+eksctl delete cluster --name <your-cluster-name> --region <your-region>
 
 ### Advanced Configurations
 
@@ -181,7 +178,6 @@ eksctl delete cluster --name <your-cluster-name> --region <your-region>
 
 You can specify multiple subnets in different availability zones for high availability. Here’s how to create a highly available cluster:
 
-```bash
 eksctl create cluster \
   --name prod-cluster \
   --region us-east-1 \
@@ -198,30 +194,26 @@ eksctl create cluster \
 
 To use AWS Fargate for running serverless pods (no EC2 instances required), you can create an EKS cluster with Fargate:
 
-```bash
 eksctl create cluster \
   --name fargate-cluster \
   --region us-west-2 \
   --fargate
-```
 
 You can then schedule workloads to Fargate.
 
 #### Option 3: Cluster Autoscaler
 
-To automatically scale your nodes in and out based on resource requests and limits, you can install the **Cluster Autoscaler** using Helm.
+To automatically scale your nodes in and out based on resource requests and limits, you can install 
+the **Cluster Autoscaler** using Helm.
 
 1. **Install the Cluster Autoscaler**:
-   ```bash
+
    helm repo add autoscaler https://kubernetes.github.io/autoscaler
    helm install cluster-autoscaler autoscaler/cluster-autoscaler \
      --set cloudProvider=aws \
      --set autoDiscovery.clusterName=<your-cluster-name>
-   ```
 
 2. **Configure Autoscaler Policies** in the `values.yaml` file for advanced scaling options.
-
----
 
 ### Conclusion
 
