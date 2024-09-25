@@ -35,24 +35,23 @@ terraform -help plan
 
 
 
-To install an **Amazon EKS (Elastic Kubernetes Service)** cluster, you can follow the step-by-step guide outlined below. This process involves setting up an EKS cluster using the AWS Management Console, **eksctl** (a CLI tool for EKS management), and **kubectl** for interacting with the cluster.
+To install an **Amazon EKS (Elastic Kubernetes Service)** cluster, you can follow the step-by-step guide outlined below. 
+This process involves setting up an EKS cluster using the AWS Management Console, **eksctl** (a CLI tool for EKS management), 
+and **kubectl** for interacting with the cluster.
 
 ### Prerequisites
 
 1. **AWS CLI** installed and configured.
    - Install AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
    - Configure AWS CLI:
-     ```bash
-     aws configure
-     ```
+
+aws configure
 
 2. **eksctl** installed.
    - Install eksctl: https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html
 
-   ```bash
    curl --silent --location "https://github.com/weaveworks/eksctl/releases/download/latest_release/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
    sudo mv /tmp/eksctl /usr/local/bin
-   ```
 
 3. **kubectl** installed.
    - Install kubectl: https://kubernetes.io/docs/tasks/tools/install-kubectl/
