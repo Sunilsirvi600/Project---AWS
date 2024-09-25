@@ -7,6 +7,10 @@ egress rule 2 types
 1- port -
 2- protocol
 
+Feature	 |   Ingress Network Policy	              |   Egress Network Policy
+Controls |      Incoming traffic	                |   Outgoing traffic
+Focus	   |  Protecting pods from external access	|Preventing pods from accessing unauthorized resources
+
 # vi network_policy.yml
 
 apiVersion: networking.k8s.io/v1
