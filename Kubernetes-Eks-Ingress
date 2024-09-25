@@ -1,0 +1,247 @@
+To expose multiple services using **Ingress** with path-based routing in an **Amazon EKS** cluster, 
+you can use the **AWS Load Balancer Controller** to provision and manage an Application Load Balancer (ALB). 
+Ingress allows you to route traffic to different services based on the URL path. Here's the entire process to 
+set up an Ingress Controller and configure path-based routing.
+
+### Prerequisites
+
+1. **EKS Cluster** running.
+2. **kubectl** and **eksctl** are installed and configured.
+3. **Helm** installed to deploy the AWS Load Balancer Controller.
+
+### Step-by-Step Process
+
+#### Step 1: Install AWS Load Balancer Controller
+
+The AWS Load Balancer Controller is required to manage the Application Load Balancer (ALB) for your Ingress resource.
+
+1. **Create IAM Policy for AWS Load Balancer Controller**:
+   Download the IAM policy for the controller.
+
+# curl -o iam_policy.json https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+# aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam_policy.json
+   ```
+
+2. **Create an IAM Role for the Controller**:
+   Use `eksctl` to create an IAM role for the controller and attach the IAM policy.
+   
+   eksctl create iamserviceaccount \
+     --cluster <cluster-name> \
+     --namespace kube-system \
+     --name aws-load-balancer-controller \
+     --attach-policy-arn arn:aws:iam::<your-account-id>:policy/AWSLoadBalancerControllerIAMPolicy \
+     --approve
+   
+
+3. **Install AWS Load Balancer Controller Using Helm**:
+   First, add the Helm repository and update it.
+   
+#   helm repo add eks https://aws.github.io/eks-charts
+#   helm repo update
+ 
+   Then, install the controller:
+   
+   helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+     --set clusterName=<your-cluster-name> \
+     --set serviceAccount.create=false \
+     --set serviceAccount.name=aws-load-balancer-controller \
+     -n kube-system
+
+4. **Verify that the Load Balancer Controller is Running**:
+   Check the controller deployment status:
+   
+   kubectl get deployment -n kube-system aws-load-balancer-controller
+
+#### Step 2: Deploy Four Sample Services
+
+To set up path-based routing, you will need four different services to route traffic to.
+
+Create a deployment and service for each application (or microservice). Here’s an example for each service:
+
+1. **Service 1: `/service1`**
+
+   `service1-deployment.yaml`:
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: service1-deployment
+   spec:
+     replicas: 2
+     selector:
+       matchLabels:
+         app: service1
+     template:
+       metadata:
+         labels:
+           app: service1
+       spec:
+         containers:
+         - name: app
+           image: hashicorp/http-echo
+           args:
+             - "-text=Service 1"
+           ports:
+             - containerPort: 8080
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: service1
+   spec:
+     selector:
+       app: service1
+     ports:
+       - protocol: TCP
+         port: 80
+         targetPort: 8080
+     type: ClusterIP
+   ```
+
+2. **Service 2: `/service2`**
+
+   `service2-deployment.yaml`:
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: service2-deployment
+   spec:
+     replicas: 2
+     selector:
+       matchLabels:
+         app: service2
+     template:
+       metadata:
+         labels:
+           app: service2
+       spec:
+         containers:
+         - name: app
+           image: hashicorp/http-echo
+           args:
+             - "-text=Service 2"
+           ports:
+             - containerPort: 8080
+   ---
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: service2
+   spec:
+     selector:
+       app: service2
+     ports:
+       - protocol: TCP
+         port: 80
+         targetPort: 8080
+     type: ClusterIP
+   ```
+
+Follow the same pattern for services 3 and 4, adjusting the names, labels, and paths accordingly.
+
+Apply the services to your cluster:
+
+```bash
+kubectl apply -f service1-deployment.yaml
+kubectl apply -f service2-deployment.yaml
+```
+
+#### Step 3: Create an Ingress Resource for Path-Based Routing
+
+Now, create an **Ingress** resource that defines how traffic is routed to different services based on the URL path.
+
+`ingress.yaml`:
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/load-balancer-attributes: routing.http2.enabled=true
+spec:
+  rules:
+  - host: <your-alb-dns>
+    http:
+      paths:
+      - path: /service1
+        pathType: Prefix
+        backend:
+          service:
+            name: service1
+            port:
+              number: 80
+      - path: /service2
+        pathType: Prefix
+        backend:
+          service:
+            name: service2
+            port:
+              number: 80
+      - path: /service3
+        pathType: Prefix
+        backend:
+          service:
+            name: service3
+            port:
+              number: 80
+      - path: /service4
+        pathType: Prefix
+        backend:
+          service:
+            name: service4
+            port:
+              number: 80
+```
+
+Replace `<your-alb-dns>` with the DNS or domain name for your Application Load Balancer (or leave it blank if you don’t have one).
+
+Apply the Ingress resource:
+
+```bash
+kubectl apply -f ingress.yaml
+```
+
+#### Step 4: Verify the Ingress
+
+1. **Check the Ingress resource**:
+   ```bash
+   kubectl get ingress
+   ```
+
+   You should see the external DNS of the ALB created by the AWS Load Balancer Controller.
+
+2. **Access your services**:
+   Once the ALB is created and DNS is propagated, you can access your services using the following paths:
+   - `http://<alb-dns>/service1`
+   - `http://<alb-dns>/service2`
+   - `http://<alb-dns>/service3`
+   - `http://<alb-dns>/service4`
+
+### Optional: Configure SSL for HTTPS
+
+To add SSL to the ALB, you can request an SSL certificate from AWS Certificate Manager (ACM) and update the Ingress resource with an HTTPS listener.
+
+1. Request an SSL certificate for your domain using ACM.
+
+2. Modify the Ingress annotations to include the certificate ARN and enable HTTPS:
+   ```yaml
+   alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<region>:<account-id>:certificate/<cert-id>
+   alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+   ```
+
+3. Apply the updated Ingress file.
+
+---
+
+### Conclusion
+
+- **Ingress with AWS Load Balancer Controller** allows you to expose multiple services using path-based routing.
+- You can manage routing efficiently by defining paths for each service in the Ingress resource.
+- The **AWS Load Balancer Controller** provisions an ALB, and you can route traffic to different services based on their URL path.
+- Optionally, you can secure your services with SSL/TLS by attaching an ACM certificate to the ALB.
+
+This setup is ideal for handling multiple microservices in an EKS cluster where services are exposed using HTTP/HTTPS paths.
