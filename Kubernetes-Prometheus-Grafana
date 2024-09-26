@@ -60,6 +60,35 @@ automatically start scraping metrics from the Kubernetes cluster.
 
    Now, open your browser and go to `http://localhost:9090` to access the Prometheus web UI.
 
+### 3.1 Modify Prometheus Configuration
+
+1. Open the `prometheus.yml` file in  or wherever your Prometheus configuration is located.
+
+# kubectl get cm     (cm is config map)
+# kubectl edit cm promethus-server
+
+2. Add a scrape job for Jenkins metrics:
+before doing this expose kube-state-metrix
+   yaml
+   scrape_configs:
+     - job_name: 'jenkins'
+       metrics_path: '/prometheus/'
+       static_configs:
+         - targets: ['<your-jenkins-url>:<port>']
+     - job_name: 'kube-state-matrix'
+       metrics_path: '/kube-state/'
+       static_configs:
+         - targets: ['promethus-state-metrix:<port>']
+   
+   For example, if Jenkins is running on `http://localhost:8080`, your configuration will look like this:
+
+   yaml
+   scrape_configs:
+     - job_name: 'jenkins'
+       metrics_path: '/prometheus/'
+       static_configs:
+         - targets: ['localhost:8080']
+   
 ### Step 4: Install Grafana
 
 Grafana is used to visualize the metrics collected by Prometheus. We'll use Helm to install Grafana.
