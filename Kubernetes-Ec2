@@ -1,0 +1,193 @@
+Creating a Kubernetes cluster from scratch on AWS EC2 instances using `kubeadm` involves the following steps. This guide assumes you'll be using **Ubuntu** as the operating system for the EC2 instances. We'll cover setting up a **1 master node** and **2 worker nodes** configuration.
+
+### Steps Overview:
+1. Launch EC2 instances on AWS.
+2. Install dependencies on all nodes (Master and Workers).
+3. Initialize the Kubernetes master node.
+4. Join worker nodes to the master node.
+5. Install a pod network (CNI) to allow communication between nodes.
+6. Verify the cluster.
+
+---
+
+### Step-by-Step Guide to Create a Kubernetes Cluster on AWS EC2
+
+#### **1. Launch EC2 Instances**
+
+You need at least 3 EC2 instances for this example:
+- **1 Master node**.
+- **2 Worker nodes**.
+
+##### a) **Create the EC2 Instances:**
+- Go to the **AWS Management Console**.
+- Navigate to **EC2** and click **Launch Instance**.
+- Choose **Ubuntu Server 20.04 LTS** (or another version of your choice).
+- Select an instance type (e.g., `t2.medium` for the Master and Workers).
+- Configure network settings, making sure the instances are in the same **VPC** and **Subnet** for easy communication.
+- Enable **SSH** access by opening port **22** and **Kubernetes ports** (e.g., 6443 for the API server).
+- Launch at least **1 Master** and **2 Worker** instances.
+
+---
+
+#### **2. Install Dependencies (on Master and Worker Nodes)**
+
+For all nodes (both **Master** and **Worker**), SSH into the EC2 instances and follow the steps below:
+
+##### a) **Update and Install Packages**:
+Update the package list and install dependencies:
+```bash
+sudo apt-get update
+sudo apt-get install -y apt-transport-https curl
+```
+
+##### b) **Disable Swap**:
+Kubernetes requires swap to be disabled.
+```bash
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+```
+
+##### c) **Install Docker (or containerd)**:
+Docker will be used as the container runtime. Install Docker on all nodes:
+```bash
+sudo apt-get install -y docker.io
+sudo systemctl enable docker
+sudo systemctl start docker
+```
+
+##### d) **Install Kubernetes components** (`kubeadm`, `kubectl`, `kubelet`):
+Add the Kubernetes repository and install the required packages:
+```bash
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+```
+
+---
+
+#### **3. Initialize the Master Node**
+
+On the **Master node**, initialize the Kubernetes control plane using `kubeadm`:
+
+##### a) **Run the following command to initialize the master**:
+```bash
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16
+```
+- The `--pod-network-cidr` flag is necessary for specifying the pod network range (for use with certain CNI plugins like Calico).
+
+##### b) **Set up Kubernetes for the root user (or your user)**:
+Run these commands to start using Kubernetes on the master node:
+```bash
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
+After initialization, the output will give you a **kubeadm join command**. This will be used to add worker nodes to the cluster.
+
+##### Example:
+```bash
+kubeadm join <Master-Node-IP>:6443 --token <your-token> --discovery-token-ca-cert-hash sha256:<hash-value>
+```
+
+---
+
+#### **4. Install a Pod Network (CNI)**
+
+Kubernetes requires a **Container Network Interface (CNI)** plugin for pod communication. We'll use **Calico** as an example.
+
+##### a) **Install Calico network plugin** on the master node:
+```bash
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+```
+
+This configures the networking across the cluster.
+
+---
+
+#### **5. Join Worker Nodes to the Cluster**
+
+On **each worker node**, run the `kubeadm join` command you received during the master initialization step. If you don't have the token handy, you can generate a new one on the master node:
+
+##### a) **Generate a new token on the master (if needed)**:
+```bash
+kubeadm token create --print-join-command
+```
+
+##### b) **Run the join command on each worker**:
+```bash
+sudo kubeadm join <Master-Node-IP>:6443 --token <your-token> --discovery-token-ca-cert-hash sha256:<hash-value>
+```
+
+This will join the worker nodes to the Kubernetes cluster.
+
+---
+
+#### **6. Verify the Cluster**
+
+##### a) **On the master node**, check the status of the nodes:
+```bash
+kubectl get nodes
+```
+
+You should see all nodes (Master and Workers) listed as `Ready`.
+
+##### Example output:
+```
+NAME          STATUS   ROLES    AGE   VERSION
+master-node   Ready    master   10m   v1.24.0
+worker-node1  Ready    <none>   5m    v1.24.0
+worker-node2  Ready    <none>   5m    v1.24.0
+```
+
+##### b) **Check Pods in the cluster**:
+You should also verify the system pods (like CoreDNS) are running:
+```bash
+kubectl get pods --all-namespaces
+```
+
+---
+
+#### **7. (Optional) Deploy a Sample Application**
+
+To ensure that your Kubernetes cluster is working, you can deploy a simple Nginx application.
+
+##### a) **Deploy an Nginx pod**:
+```bash
+kubectl create deployment nginx --image=nginx
+```
+
+##### b) **Expose the Nginx deployment as a service**:
+```bash
+kubectl expose deployment nginx --port=80 --type=NodePort
+```
+
+##### c) **Check the service**:
+```bash
+kubectl get svc
+```
+
+You'll see the `NodePort` that has been assigned, and you can access the Nginx service through the worker node's IP at that port.
+
+---
+
+### Additional Considerations:
+
+- **High Availability (HA) Setup**: For production, you may want to set up an HA Kubernetes control plane with multiple master nodes.
+- **Persistent Storage**: If your application requires persistent data storage, consider setting up **EBS volumes** for persistent storage.
+- **Monitoring and Logging**: Tools like **Prometheus**, **Grafana**, and **ELK Stack** can be installed for monitoring and logging.
+- **Auto-scaling**: Consider using Kubernetes **Cluster Autoscaler** and **Horizontal Pod Autoscaler** to dynamically scale your EC2 instances and applications based on load.
+
+---
+
+### Summary:
+1. **Launch EC2 instances** for the master and worker nodes.
+2. **Install Docker, kubelet, kubeadm, and kubectl** on all instances.
+3. **Initialize the Kubernetes master node** using `kubeadm`.
+4. **Join worker nodes** to the master using the `kubeadm join` command.
+5. **Install a network plugin (CNI)** like Calico.
+6. **Verify the cluster** using `kubectl get nodes`.
+
+Your Kubernetes cluster is now set up from scratch on AWS EC2! You can start deploying applications or add more nodes as needed.
