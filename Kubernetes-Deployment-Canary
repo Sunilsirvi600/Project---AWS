@@ -1,0 +1,244 @@
+**Canary Deployment** is a strategy where a new version of the application is gradually rolled out to a subset of users, 
+allowing you to test the new version while minimizing risk. This strategy is particularly useful for testing new features or
+changes without impacting the entire user base. Once the new version is deemed stable, it can be rolled out to the remaining users.
+
+In Kubernetes, you can implement **canary deployments** using **Ingress resources** by splitting traffic between the old and new versions of your application.
+
+Here's the step-by-step process to implement **canary deployment** with **Ingress** resources.
+
+### **Step-by-Step Process for Canary Deployment with Ingress**
+
+### 1. **Prerequisites**
+
+Ensure you have the following:
+- A **Kubernetes cluster** (e.g., EKS, GKE, etc.).
+- An **Ingress controller** installed (e.g., **NGINX Ingress Controller**).
+- **kubectl** configured to interact with your cluster.
+- Two versions of your application: the stable version and the canary version.
+
+### 2. **Set Up the NGINX Ingress Controller**
+
+You need to have the NGINX Ingress controller installed and running in your cluster. If you don’t have it installed, you can install it via **Helm**:
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx
+
+Verify that the NGINX Ingress controller is running:
+
+kubectl get pods -n ingress-nginx
+
+### 3. **Deploy the Stable (Primary) Version of Your Application**
+
+Deploy the stable version of your application. This is the version currently serving production traffic.
+
+#### Stable Deployment and Service (v1)
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-stable
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: stable
+    spec:
+      containers:
+      - name: my-app
+        image: my-app:v1  # Stable version
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-stable
+spec:
+  selector:
+    app: my-app
+    version: stable
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
+Apply this deployment and service:
+
+kubectl apply -f stable-deployment.yaml
+
+### 4. **Deploy the Canary Version of Your Application**
+
+Next, deploy the canary version of your application. This is the new version you want to roll out gradually.
+
+#### Canary Deployment and Service (v2)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-canary
+spec:
+  replicas: 1  # Start with 1 replica for canary
+  selector:
+    matchLabels:
+      app: my-app
+      version: canary
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: canary
+    spec:
+      containers:
+      - name: my-app
+        image: my-app:v2  # Canary version
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-canary
+spec:
+  selector:
+    app: my-app
+    version: canary
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
+Apply this deployment and service:
+
+kubectl apply -f canary-deployment.yaml
+
+### 5. **Create Ingress Resource for Canary Deployment**
+
+Now, create an **Ingress resource** that directs a small percentage of traffic (say, 10%) to the **canary version** and 
+the remaining traffic to the **stable version**. The NGINX Ingress controller supports **weighted load balancing** through annotations.
+
+#### Ingress Resource with Canary Routing
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-by-header: "Canary"
+    nginx.ingress.kubernetes.io/canary-by-header-value: "always"
+    nginx.ingress.kubernetes.io/canary-weight: "10"  # 10% traffic to canary
+spec:
+  rules:
+  - host: my-app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-app-stable
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-app-canary
+            port:
+              number: 80
+
+### Explanation of Annotations:
+- **`nginx.ingress.kubernetes.io/canary`**: Specifies that the backend is a canary version.
+- **`nginx.ingress.kubernetes.io/canary-by-header`**: Routes traffic to the canary version based on the value of the `Canary` header.
+- **`nginx.ingress.kubernetes.io/canary-weight`**: Specifies the percentage of traffic (10%) that should be routed to the canary version. The rest will go to the stable version.
+
+Apply the Ingress resource:
+
+kubectl apply -f ingress-canary.yaml
+
+### 6. **Monitor the Canary Deployment**
+
+Once the Ingress is set up, 10% of the traffic will be routed to the **canary version**. You can monitor the performance of the canary release by:
+
+- Using **monitoring tools** like **Prometheus**, **Grafana**, or **Datadog** to observe metrics such as response times, errors, and resource usage.
+- Checking **logs** from both the canary and stable versions.
+
+To fetch logs:
+
+kubectl logs deployment/my-app-canary
+kubectl logs deployment/my-app-stable
+
+### 7. **Increase Canary Traffic Gradually**
+
+If the canary version is performing well, you can gradually increase the percentage of traffic routed to it. To do this, update the **`nginx.ingress.kubernetes.io/canary-weight`** annotation in the Ingress resource:
+
+nginx.ingress.kubernetes.io/canary-weight: "50"  # Now, route 50% of traffic to canary
+
+Apply the updated Ingress resource:
+
+kubectl apply -f ingress-canary.yaml
+
+Keep increasing the percentage until 100% of the traffic is routed to the canary version, which would make it the new stable version.
+
+### 8. **Roll Back (If Necessary)**
+
+If the canary deployment experiences issues, you can quickly roll back by setting **`nginx.ingress.kubernetes.io/canary-weight`** to 0:
+
+nginx.ingress.kubernetes.io/canary-weight: "0"  # Route all traffic back to stable
+
+Apply the changes to revert all traffic to the stable version:
+
+kubectl apply -f ingress-canary.yaml
+
+### 9. **Promote Canary to Stable**
+
+If the canary version proves to be stable and functional, you can promote it to be the stable version by:
+
+1. **Scaling up the canary deployment** and eventually decommissioning the old stable version.
+2. **Updating the stable deployment** to use the canary image.
+
+To promote the canary:
+
+- Update the stable deployment to use the canary image:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-stable
+spec:
+  template:
+    spec:
+      containers:
+      - name: my-app
+        image: my-app:v2  # Canary image becomes stable
+```
+
+- Remove the canary annotations from the Ingress resource.
+
+Apply the updates to promote the canary:
+
+kubectl apply -f stable-deployment.yaml
+kubectl apply -f ingress-canary.yaml
+
+### Conclusion
+
+1. **Deploy the stable version** of your application.
+2. **Deploy the canary version** (new version) in parallel.
+3. Set up an **Ingress resource** to route a percentage of traffic to the canary version.
+4. **Monitor** the canary deployment for performance and stability.
+5. Gradually **increase traffic** to the canary version.
+6. **Roll back** if issues are encountered or **promote the canary** to stable if successful.
+
+By using this approach, you can release new versions of your application with minimal risk, gradually increasing traffic to the new 
+version and easily rolling back if necessary.
