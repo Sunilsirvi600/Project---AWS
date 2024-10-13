@@ -1,0 +1,245 @@
+**Blue-Green Deployment** is a strategy that allows you to release new versions of your application with zero downtime by running two versions (blue and green) in parallel. 
+In Kubernetes, we can implement blue-green deployments using **Ingress resources** to route traffic between the old (blue) and new (green) versions of the application.
+
+Here’s a step-by-step process to achieve **blue-green deployment** with Kubernetes and Ingress:
+
+
+### **Step-by-Step Process for Blue-Green Deployment with Ingress**
+
+### 1. **Prerequisites**
+
+Ensure you have the following:
+- A **Kubernetes cluster** (e.g., EKS).
+- **Ingress controller** (e.g., NGINX Ingress Controller) installed in your cluster.
+- **Helm** (if using Helm for deployment).
+- **kubectl** access to your Kubernetes cluster.
+
+### 2. **Set Up the Ingress Controller**
+
+You need to install an Ingress Controller to route traffic. For NGINX Ingress Controller:
+
+- **Install NGINX Ingress Controller** via Helm:
+
+  helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+  helm repo update
+  helm install ingress-nginx ingress-nginx/ingress-nginx
+
+Check if the Ingress controller is running:
+
+kubectl get pods -n ingress-nginx
+
+### 3. **Deploy the Blue (Current) Version of the Application**
+
+Let’s assume your **blue version** of the application is already running. Here’s an example of how to define a **blue deployment** with its **service**.
+
+#### Deployment and Service for Blue Version
+========================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-blue
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: blue
+    spec:
+      containers:
+      - name: my-app
+        image: my-app:1.0.0  # Your current blue version image
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-blue
+spec:
+  selector:
+    app: my-app
+    version: blue
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+=====================================================================
+Apply this deployment and service using `kubectl`:
+
+kubectl apply -f blue-deployment.yaml
+
+### 4. **Deploy the Green (New) Version of the Application**
+
+Next, deploy the **green version** of the application using a similar manifest but with different labels for identification.
+
+#### Deployment and Service for Green Version
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-green
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+      version: green
+  template:
+    metadata:
+      labels:
+        app: my-app
+        version: green
+    spec:
+      containers:
+      - name: my-app
+        image: my-app:2.0.0  # Your new green version image
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-green
+spec:
+  selector:
+    app: my-app
+    version: green
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
+Apply this deployment and service using `kubectl`:
+
+kubectl apply -f green-deployment.yaml
+
+### 5. **Set Up Ingress Resource to Route Traffic**
+
+Now, we need to use an **Ingress resource** to manage traffic between the **blue** and **green** versions of the application. Initially, 
+you will route traffic to the **blue** version.
+
+#### Initial Ingress Configuration (Blue Version)
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: my-app.example.com  # Your domain or IP
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-app-blue
+            port:
+              number: 80
+```
+
+Apply this Ingress resource:
+
+kubectl apply -f ingress-blue.yaml
+
+### 6. **Test the Blue Version**
+
+Once the Ingress is set up, test the application by accessing `my-app.example.com`. All traffic should be routed to the **blue** version.
+
+### 7. **Switch Traffic to the Green Version**
+
+When you are ready to switch traffic to the **green version** (after verifying the green deployment is stable), update the Ingress resource to route traffic to the **green** version.
+
+#### Updated Ingress Configuration (Switch to Green)
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: my-app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-app-green
+            port:
+              number: 80
+
+Apply the updated Ingress resource:
+
+kubectl apply -f ingress-green.yaml
+
+### 8. **Test the Green Version**
+
+Test the new **green version** by accessing the same URL (`my-app.example.com`). All traffic should now be routed to the **green version**.
+
+---
+
+### 9. **Roll Back if Needed (Switch Back to Blue)**
+
+If any issues are found with the green version, you can easily roll back to the **blue version** by updating the Ingress resource again.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: my-app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-app-blue
+            port:
+              number: 80
+```
+
+Apply the rollback to blue:
+
+kubectl apply -f ingress-blue.yaml
+
+### 10. **Clean Up (Optional)**
+
+After confirming that the green deployment is stable and the blue version is no longer needed, you can delete the blue deployment and service:
+
+kubectl delete deployment my-app-blue
+kubectl delete service my-app-blue
+
+### 11. **Monitoring and Final Verification**
+
+Ensure you are using monitoring tools like **Prometheus** and **Grafana** to observe the behavior of the new deployment. You can check the logs, resource usage, and traffic patterns to ensure everything is functioning as expected.
+
+### Summary
+
+1. **Deploy the blue version** (current version).
+2. **Deploy the green version** (new version).
+3. Create an **Ingress resource** to route traffic to the **blue version**.
+4. When ready, **switch traffic** to the **green version** by updating the Ingress resource.
+5. **Test and monitor** the green version to ensure stability.
+6. **Roll back** to the blue version if needed, or clean up the blue deployment once the green version is stable.
+
+By following this approach, you can achieve a **zero-downtime deployment** with the ability to easily rollback if needed.
