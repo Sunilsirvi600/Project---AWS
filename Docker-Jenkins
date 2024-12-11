@@ -1,1 +1,50 @@
 
+**Here's a step-by-step guide on how to install Docker and Jenkins using the AWS CLI and Docker commands:**
+
+**Prerequisites:**
+* An AWS account with necessary permissions.
+* AWS CLI configured with your credentials.
+* An EC2 instance running a Linux distribution (e.g., Amazon Linux 2).
+
+**1. Install Docker:**
+
+#   sudo yum update -y
+#   sudo yum install -y docker
+#   sudo systemctl start docker
+#   sudo systemctl enable docker
+#   sudo systemctl status docker 
+
+**2. Pull the Jenkins Docker Image:**
+ 
+#   docker pull jenkins/jenkins:lts-jdk11
+
+**3. Run the Jenkins Container:**
+
+#  docker run -d -p 8080:8080 -v jenkins_home:/var/jenkins_home -it jenkins/jenkins:lts-jdk11
+
+   * **-d:** Runs the container in detached mode.
+   * **-p 8080:8080:** Maps port 8080 of the container to port 8080 of the host machine.
+   * **-v jenkins_home:/var/jenkins_home:** Mounts a local directory as a volume to persist Jenkins configuration and data.
+   * **jenkins/jenkins:lts-jdk11:** Specifies the Docker image to use.
+
+**4. Access Jenkins:**
+   - Open a web browser and go to `http://<your_instance_public_ip>:8080`.
+   - You'll be prompted to enter an initial administrator password. This password can be found in the container logs.
+
+# docker exec -it <container_name> /bin/bash
+
+This command will start an interactive shell within the specified container. Once inside, you can run the command to find the initial admin password:
+
+# cat /var/jenkins_home/secrets/initialAdminPassword
+
+# go to webui and paste Administrator password
+
+# install suggested plugins
+
+# create username with passwd
+
+# now start jenkins
+
+# once u setup all things to better restart
+
+http://<ec2-instance-public-ip>:8080/restart
