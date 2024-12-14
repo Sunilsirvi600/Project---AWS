@@ -1,0 +1,132 @@
+*** Vpc Transit Gateway ***
+
+Create 3 vpc
+
+Create Vpc -1 
+Add 1 public subnet
+Add 1 private subnet
+Create vpc
+
+Create vpc -2
+Add 1 private subnet
+Create vpc 
+
+Create vpc -3
+Add 1 private subnet
+Create vpc
+--------------------------------------------
+Now create transit gatway
+Name = vpc -1-2-3
+Configure transit gateway
+Asn = 4200000000
+Add tag
+Then create transit gateway
+------------------------------------------------
+Now create transit gateway attachments
+Name = vpc 1 tg
+Select
+Transit gateway id
+Now attachment type = vpc 
+Vpc attachment = vpc -1 ( Select vpc id )
+Tags
+Create transit gateway attachment
+-------------------------------------------------
+Now create transit gateway attachments
+Name = vpc 2 tg
+Select
+Transit gateway id
+Now attachment type = vpc 
+Vpc attachment = vpc -2 ( Select vpc id )
+Tags
+Create transit gateway attachment
+-------------------------------------------------
+Now create transit gateway attachments
+Name = vpc 3 tg
+Select
+Transit gateway id
+Now attachment type = vpc 
+Vpc attachment = vpc -3 ( Select vpc id )
+Tags
+Create transit gateway attachment
+-------------------------------------------------
+Now come to route table 
+Edit route table private -1 (vpc-1)
+Cidr-subnet(vpc-2) = transit gateway
+Cidr-subnet(vpc-3) = transit gateway
+Save it
+
+Edit route table private -2 (vpc-2)
+Cidr-subnet(vpc-1) = transit gateway
+Cidr-subnet(vpc-3) = transit gateway
+Save it
+
+Edit route table private -3 (vpc-3)
+Cidr-subnet(vpc-2) = transit gateway
+Cidr-subnet(vpc-1) = transit gateway
+Save it
+-------------------------------------------------
+( u also select amazon machine for practice )
+( u also select new security group  ssh = anywhere , all traffic = anywhere )
+   Create 1 instance public
+1)	Name = public-1
+2)	Select ubuntu
+3)	Select key
+Click on Network setting edit
+4)	Select vpc-1
+5)	Select subnet public
+6)	Auto assign public ip 
+Enable
+Security group = default
+-------------------------------------------------
+   Create 1 instance private
+7)	Name = private-1
+8)	Select ubuntu
+9)	Select key
+Click on Network setting edit
+10)	Select vpc-1
+11)	Select subnet private
+12)	Auto assign public ip 
+Disable
+Security group = default
+-------------------------------------------------
+Create 1 instance private
+1)	Name = private-2
+2)	Select ubuntu
+3)	Select key
+Click on Network setting edit
+4)	Select vpc-2
+5)	Select subnet private
+6)	Auto assign public ip 
+Disable
+Security group = default
+--------------------------------------------------
+Create 1 instance private
+1)	Name = private-3
+2)	Select ubuntu
+3)	Select key
+Click on Network setting edit
+4)	Select vpc-3
+5)	Select subnet private
+6)	Auto assign public ip 
+Disable
+Security group = default
+--------------------------------------------------
+now connect public instance using cli / powershell / ubuntu
+
+connect public-1
+send key to public-1
+
+now send key to private-1
+connect private-1
+
+now send key to private-2
+now send key to private-3
+
+now u connect 
+private-1 to private-2 or private-3
+
+private-2 to private-1 or private-3
+
+private-3 to private-1 or private-2
+-------------------------------------------------------
+

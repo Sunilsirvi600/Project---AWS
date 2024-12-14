@@ -1,0 +1,60 @@
+*** How to add elastic network interface***
+
+First create instance
+Than create network interface
+Write desciption
+Choose which is your subnet of instance
+Choose private ip range ( select in your instance cidr range) / also choose auto assign
+Add tag than click on create network interface 
+ 
+-	Now go to instance
+# ifconfig
+Update your system
+# sudo apt-get update
+Install net tools
+# sudo apt install net-tools
+# ifconfig
+
+Now attach network interface in aws console
+Select network id and click on action
+And attach with your instance
+-	Now go to instance
+# sudo /etc/netplan
+Now edit configuration yaml file
+# sudo nano 50-cloud-init.yaml
+
+eth1
+            dhcp4: true
+            dhcp6: false
+            match:
+                macaddress: 02:b6:39:ad:df:22
+            set-name: eth1
+(copy from paste change eth0 to eth1 and change mac add = new network interface )
+Save and exit ( ctrl x than y enter )
+-	Now come out using cd
+# cd
+# sudo netplan --debug apply
+# ifconfig ( network interface card attach with instance )
+ 
+If you want detach network interface than go to aws console
+Select network and click on action
+Detach and saved
+And
+If you want delete network
+Select network and click on action
+And delete tham
+
+-	Now go to cli
+Also delete from cli
+# ifconfig
+To change the termination behavior of a network interface using the console
+1.	Open the Amazon EC2 console at https://console.aws.amazon.com/ec2/.
+2.	In the navigation pane, choose Network Interfaces.
+3.	Select the checkbox for the network interface.
+4.	Choose Actions, Change termination behavior.
+5.	Select or clear Delete on termination, Enable as needed, and then choose Save.
+
+
+
+
+

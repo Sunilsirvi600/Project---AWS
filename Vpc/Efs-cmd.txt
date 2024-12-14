@@ -1,0 +1,69 @@
+
+**** connect multiple instance with one efs ****
+
+create 2 instances
+security group
+nfs = ipv4 everywhere
+ssh = my ipv4
+
+-------------------------------
+now create efs file system
+
+click on custormize
+1) name of efs
+2) class standard
+3) Automatic backups ( enables )
+4) click on next
+5) select vpc where ur instance create
+6) u also create policy
+7) then next
+8) Review and create 
+
+now click on efs and attach
+and copy using mount efs
+*** sudo mount -t efs -o tls fs-01f3009c74cfa8954:/ efs ***   ( u also change last efs as per ur directory name )
+
+----------------------------------------------------------------
+
+come to cli -1
+
+# sudo hostname server-1
+# bash
+# sudo yum install -y amazon-efs-utils
+# mkdir efs-mount
+# ls
+
+come to cli -2
+
+# sudo hostname server-2
+# bash
+# sudo yum install -y amazon-efs-utils
+# mkdir efs-mount
+# ls
+# ls -lrth ( its permission is root )
+----------------------------------------------------------------
+now paste same cmd both instances
+
+# sudo mount -t efs -o tls fs-01f3009c74cfa8954:/ efs
+# sudo mount -t efs -o tls fs-01f3009c74cfa8954:/ efs-mount
+# cd efs-mount/
+# ls
+# sudo nano rimzim
+# cat rimzim
+# sudo nano rimzim
+# cat rimzim
+# cd
+-----------------------------------------------------------------
+example u also download hadoop-2.7.5
+server-1 # wget link of hadoop-2.7.5
+# sudo mv hadoop-2.7.5 efs-mount/
+
+now check on server-2
+server-2 # ls     ( its visible )
+# sudo mv /efs-mount/hadoop-2.7.5 /home/ec2-user/
+# ls
+# tar -xzvf hadoop-2.7.5
+# ls 
+# sudo chown ec2-user:ec2-user /efs-mount  ( change permission )
+
+-------------------------------------------------------------------

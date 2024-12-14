@@ -1,0 +1,81 @@
+
+**** how to increase volume (ssd/hhd) in instance
+
+# df -hT
+# lsblk 
+
+*now go to console and click on volume
+*click on action and modify volume
+*enter gb how much u want
+*and modify
+
+*now go to instance
+
+# lsblk ( its modify to old with new device volume
+# lsblk  ( not increase in partition
+# df -hT ( not modify in partition
+
+# sudo growpart /dev/xvda 1 (use cmd to increase
+
+but not showing in useble
+# sudo resize2fs /dev/xvda1 (now complete modify
+
+=== [centos@ip-172-31-7-118 ~]$ sudo xfs_growfs /            (in centos )
+
+# df -hT
+
+**** how to add new volume with running instance
+
+*now create volume 
+type volume type
+how much u want increase
+now create volume
+and
+click on attach volume
+select instance
+and attach volume
+
+now go to instance
+
+# lsblk ( u watch new device connect with u r instance
+
+now create file system in new device
+
+# sudo mkfs -t xfs /dev/xvdf
+
+# lsblk (now u see file system create
+
+now mount that device
+
+# sudo mkdir /xyz (create directory in root)
+
+attach them
+# sudo mount /dev/xvdf /xyz
+
+now u see 
+# lsblk
+also usable
+# df -hT
+
+now u want umount them
+
+# sudo umount /cloud
+
+also use
+# sudo umount -f /dev/xvdf (it's like force fully
+
+also use
+# sudo lsof /dev/xvdf
+# sudo kill -9 (pid)
+# sudo umount /dev/xvdf
+
+# df -hT
+
+now go to consloe and click on volume
+and detach volume click on detach volume
+again select volume and delete them
+
+
+
+
+

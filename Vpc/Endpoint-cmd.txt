@@ -1,0 +1,125 @@
+**** Create vpc ****
+
+1)	Create vpc
+
+Name your project
+2)	write name of datacentre
+
+Ipv4 cidr block
+3)	10.0.0.0/16
+It’s means you block 2 octact / 16 bit
+
+4)	Click no ipv6 cidr block
+
+5)	Tenancy = default
+
+6)	No of az
+2 or 3
+
+7)	No of public subnet
+2 or 3
+
+8)	No of private subnet
+2 or 3
+**Nat gatway 
+None
+   **Vpc endpoint 
+None
+Now click on create vpc
+
+*** Now create 2 instance public ***
+With name add 
+1ins – public dc
+2ins – private dc
+
+Create 1 instance public
+1)	Name
+2)	Select ubuntu
+3)	Select key
+Click on Network setting edit
+4)	Select vpc datacentre
+5)	Select subnet public
+6)	Auto assign public ip 
+Enable
+
+7)	Create new Security group
+Name = datacentrevpc (also select default )
+ Ssh = my ip
+
+Create 2 instance private
+1)	Name
+2)	Select ubuntu
+3)	Select key
+Click on network setting edit
+4)	Select vpc datacentre
+5)	Select subnet private
+6)	Auto assign public ip
+Disable
+
+7)	Select default security group
+Name = datacentrevpc (also select default)
+
+
+*** Now create Nat gateway ***
+Click on Create nat gatway
+1)	Write name natgatway-datacentre
+2)	Select subnet = public subnet
+
+Connectivity type
+3)	Select public
+
+Now allocate elastic ip
+And click on last 
+Create natgatway
+
+
+Go to route table
+
+1)	Select private route
+
+Go down side
+Click on routes
+
+1)	Edit routes
+2)	Add route
+3)	Select anywhere ( 0.0.0.0/16) = natgatway (natgatway)
+4)	And save changes
+
+
+Now connect instance 
+Powershell or terminal
+ 1 ) ssh -i key.pem ubuntu@public1inst
+ 2 ) sudo apt update
+ 3 ) exit
+ Now send key to public1instance
+ 1 ) scp -i key.pem key.pem ubuntu@public1ins:.
+Now again connect public 1inst
+1)	Ssh -i key.pem ubuntu@public1inst
+2)	ls -lrth   (see key and permission
+3)	Chmod 400 key.pem (change permission
+
+Now connect with public to private instance
+1 ) ssh -i key.pem ubuntu@private2inst
+ now connection establish
+1 ) sudo apt update
+2 ) ping google.com
+
+
+-------------------------------------------------
+now create vpc endpoint
+
+click ov vpc endpoint
+create endpoint
+name = 
+select aws service
+amzon s3 = gateway
+
+select vpc to attach service
+and click on create endpoint
+-------------------------------------------------
+now go to console select instance and click on action
+security - modify iam role
+select = s3 full access (if not than create a role)
+---------------------------------------------------
+now go cli
+use s3 cmd in cli

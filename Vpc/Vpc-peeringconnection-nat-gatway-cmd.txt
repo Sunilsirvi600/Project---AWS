@@ -1,0 +1,258 @@
+
+***create vpc to vpc perring connection***
+
+create 1-vpc only
+write name of vpc = public-1/private-1
+select ipv4 cidr  = 10.0.0.0/16
+now create vpc
+
+cretae another 2-vpc
+write name of vpc = private-2
+select ipv4 cidr  = 10.1.0.0/16
+create vpc
+
+- create subnet 
+create 1-subnet 
+select vpc-id = public-1/private-1
+create subnet
+write name of subnet public-1
+
+create 2-subnet
+select vpc-id = public-1/private-1
+create subnet
+write name of subnet private-1
+
+create 3-subnet
+select vpc-id = private-2
+create subnet
+select different availabilty zone like b
+write name of subnet private-2
+
+- create route-table
+write name of route-table = main-public-1
+select vpc-id = public-1/private-1
+create route-table
+
+create route-table
+write name of route-table = private-1
+select vpc-id = public-1/private-1
+create route-table
+
+create route-table
+write name of route-table = private-2
+select vpc-id = private-2
+create route-table
+
+- create internet gateway
+write name igw-public-1
+create internet gateway
+
+- create peering connection
+write name of peering connection = private-1/private-2
+select vpc-id (requester) = public-1/private-1
+
+select vpc-id (accepter) = private-2
+ 
+add tag as per organization
+now create peering connection
+
+select peering connection click on action
+and accept request
+
+-now go to route-table
+select main-public-1
+click on downside route
+edit route
+
+destination = 0.0.0.0/0
+target      = igw-
+and save changes
+
+-now go to route-table
+select private-1
+click on downside route
+edit route
+
+destination = 10.1.0.0/16  (cidr range of vpc- public-1/private-1)
+target      = peering connection
+and save changes
+
+-now go to route-table
+select private-2
+click on downside route
+edit route
+
+destination = 10.0.0.0/16 (cidr range of vpc- private-2)
+target      = peering connection
+and save changes
+
+-now go to route-table
+
+select main-public-1
+click on downside subnet association
+and edit subnet association
+select public-1
+save association
+
+select private-1
+click on downside subnet association
+and edit subnet association
+select private-1
+save association
+
+select private-2
+click on downside subnet association
+and edit subnet association
+select private-2
+save association
+
+now create instance
+
+1- launch instance
+name = public-1
+machine = ubuntu (u select as per your choice)
+select keypair
+
+network setting edit
+vpc    = public-1/private-1
+subnet = public-1
+auto assign ip = enable
+
+
+select security group = default
+now launch instance
+
+2- launch instance
+name = private-1
+machine = ubuntu (u select as per your choice)
+select keypair
+
+network setting edit
+vpc    = public-1/private-1
+subnet = private-1
+auto assign ip = disable
+
+
+select security group = default
+now launch instance
+
+3- launch instance
+name = private-2
+machine = ubuntu (u select as per your choice)
+select keypair
+
+network setting edit
+vpc    = private-2
+subnet = private-2
+auto assign ip = disable
+
+
+select security group = default
+now launch instance
+
+now go to public-1 instance
+security group
+ssh = my ip
+all traffic = sg-default
+
+now go to private-1 instance
+security group
+ssh = my ip
+ssh = cidr range (subnet private-2)
+all traffic = sg-default  
+
+now go to private-2 instance
+security group
+ssh = cidr range (subnet private-1)
+all traffic = sg-default (u select as per your choice)
+
+
+now finally come to cli
+
+power-shell
+
+#ssh -i key.pem ubuntu@public-ip         (public ip of public-1 instance)
+connection establish
+come out send key to public instance-1
+
+#exit
+#scp -i key.pem key.pem ubuntu@public-ip (public ip of public-1 instance)
+again connect
+#ssh -i key.pem ubuntu@public-ip         (public ip of public-1 instance)
+
+#ls
+key.pem 
+
+(now connect with public-1 to private-1)
+
+#ssh -i key.pem ubuntu@private-ip-1        (private ip of private-1 instance)
+#exit
+#scp -i key.pem key.pem ubuntu@private-1-ip (private ip of private-1 instance)-send key
+
+#ssh -i key.pem ubuntu@private-ip-1        (private ip of private-1 instance)
+#ls
+key.pem
+
+(now connect with private-1 to private-2)
+
+#ssh -i key.pem ubuntu@private-ip-2         (private ip of private-2 instance)
+#exit
+#scp -i key.pem key.pem ubuntu@private-2-ip (private ip of private-2 instance)-send key
+
+now u also try with
+(private-2 to private-1)
+#ssh -i key.pem ubuntu@private-1-ip
+
+ 
+if you want nat-gatway in private instance
+
+create nat-gatway
+
+name = private-1
+subnet = public-1
+connectivity type = public
+elastic-ip    = allocate elastic-ip
+create nat-gatway
+
+go to route-table
+select private-1
+select downside routes
+and edit routes
+
+add rules
+destination = 0.0.0.0/0
+target      = nat-gatway
+save changes
+
+go to cli 
+now u update private-1 instance
+# sudo apt-get update
+
+but if u want private-2 instance also have nat-gatway
+than create and edit route-table
+
+-----------------------------------------
+
+create new subnet
+azone = different zone
+
+create route-table
+edit routes
+destination =0.0.0.0/16        target = nat-gatway
+destination =vpc-id-private-2  target = peering connection
+
+edit subnet association
+select private-3 (vpc-id-public-1/private-1)
+
+create new instance
+name           = private-3
+vpc-id-public-1/private-1
+subnet         = private-3
+security group = default
+
+add rule 
+ssh = my ip
+ssh = subnet private-2 cidr
+ssh = subnet private-1 cidr
+create instance
+
